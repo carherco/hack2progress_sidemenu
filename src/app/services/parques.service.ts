@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { Parque } from 'src/model/parque';
 import { environment } from '../../environments/environment';
+import { Parque } from 'src/app/model/parque';
+import { Observable } from 'rxjs/internal/Observable';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +14,7 @@ export class ParquesService {
 
   constructor(private http: HttpClient) { }
 
-  get(): any {
+  get(): Observable<Parque[]> {
     return this.http.get<Parque[]>(this.url);
   }
 

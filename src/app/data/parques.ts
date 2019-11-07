@@ -1,6 +1,7 @@
-import { Parque } from 'src/model/parque';
+import { Parque } from 'src/app/model/parque';
 
-export const PARQUES:  Parque[] = [
+
+export const PARQUES: Parque[] = [
   {
     _id: '5dc01ec722d4a80017efc5f4',
     nombre: 'Parque de Mataleñas',
