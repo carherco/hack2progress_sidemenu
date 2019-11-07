@@ -1,4 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { ParquesService } from 'src/app/services/parques.service';
+import { Geolocation } from '@ionic-native/geolocation/ngx';
+import { DistanciasService } from 'src/app/services/distancias.service';
+import { Router } from '@angular/router';
+import { Parque } from 'src/app/model/parque';
 
 @Component({
   selector: 'app-list',
@@ -6,34 +11,69 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['list.page.scss']
 })
 export class ListPage implements OnInit {
-  private selectedItem: any;
-  private icons = [
-    'flask',
-    'wifi',
-    'beer',
-    'football',
-    'basketball',
-    'paper-plane',
-    'american-football',
-    'boat',
-    'bluetooth',
-    'build'
-  ];
-  public items: Array<{ title: string; note: string; icon: string }> = [];
-  constructor() {
-    for (let i = 1; i < 11; i++) {
-      this.items.push({
-        title: 'Item ' + i,
-        note: 'This is item #' + i,
-        icon: this.icons[Math.floor(Math.random() * this.icons.length)]
-      });
+
+  parques: Parque[] = [];
+  position = null;
+
+  constructor(
+    private parquesService: ParquesService,
+    private geolocation: Geolocation,
+    private distanciasService: DistanciasService,
+    private router: Router
+  ) {}
+
+  ngOnInit() { // ionViewDidEnter
+    this.parquesService.get().subscribe(
+      data => {
+        this.parques = data;
+        this.calcularDistancias();
+        this.ordenar();
+      }
+    );
+
+    this.geolocation.getCurrentPosition().then(
+      data => {
+        this.position = data.coords;
+        this.calcularDistancias();
+        this.ordenar();
+      }
+    );
+  }
+
+  private calcularDistancias() {
+    if (this.position && this.parques.length > 0) {
+      this.parques = this.parques.map(
+        item => {
+          const distancia = this.distanciasService.calcDistancia(
+            this.position.latitude,
+            this.position.longitude,
+            item.posicion.lat,
+            item.posicion.lon
+          );
+          return { ...item, distancia };
+        }
+      );
     }
   }
 
-  ngOnInit() {
+  private ordenar() {
+    if (this.position && this.parques.length > 0) {
+      this.parques = this.parques.sort(
+        (a, b) => a.distancia < b.distancia ? -1 : 1
+      );
+    }
   }
-  // add back when alpha.4 is out
-  // navigate(item) {
-  //   this.router.navigate(['/list', JSON.stringify(item)]);
-  // }
+
+  seleccionarParque(parque: Parque) {
+    this.parquesService.setParqueSeleccionado(parque);
+    this.router.navigate(['parque-detalle']);
+  }
+
+  borrarParque(parque: Parque) {
+    this.parquesService.delete(parque).subscribe(
+      respuesta => this.parques = this.parques.filter( item => item._id !== parque._id ) ,
+      error => console.log(error)
+    );
+  }
+
 }
